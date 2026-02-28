@@ -1,53 +1,35 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter
+from app.models.schemas import ResearchRequest, ResearchResponse
 from app.graph.graph import research_graph
+from app.db.database import save_research
 
-router = APIRouter(prefix="/research", tags=["Research"])
+router = APIRouter()
 
-
-class ResearchRequest(BaseModel):
-    query: str
-
-
-class ResearchResponse(BaseModel):
-    query: str
-    plan: str
-    final_report: str
-    approved: bool
-    critique: str
-
-
-@router.post("/run", response_model=ResearchResponse)
+@router.post("/run")
 async def run_research(request: ResearchRequest):
-    if not request.query.strip():
-        raise HTTPException(status_code=422, detail="Query cannot be empty")
+    result = await research_graph.ainvoke({
+        "query": request.query,
+        "sub_tasks": [],
+        "plan": "",
+        "research_results": [],
+        "critique": "",
+        "approved": False,
+        "final_report": "",
+        "current_agent": "",
+        "error": ""
+    })
 
-    try:
-        # This runs the entire graph start to finish
-        result = await research_graph.ainvoke({
-            "query": request.query,
-            "sub_tasks": [],
-            "plan": "",
-            "research_results": [],
-            "critique": "",
-            "approved": False,
-            "final_report": "",
-            "current_agent": "starting",
-            "error": ""
-        })
+    await save_research(
+        query=request.query,
+        plan=result.get("plan", ""),
+        final_report=result.get("final_report", ""),
+        approved=result.get("approved", False),
+        critique=result.get("critique", "")
+    )
 
-        return ResearchResponse(
-            query=result["query"],
-            plan=result["plan"],
-            final_report=result["final_report"],
-            approved=result["approved"],
-            critique=result["critique"]
-        )
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/health")
-async def health():
-    return {"status": "ok"}
+    return ResearchResponse(
+        plan=result.get("plan", ""),
+        final_report=result.get("final_report", ""),
+        approved=result.get("approved", False),
+        critique=result.get("critique", "")
+    )

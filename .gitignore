@@ -16,3 +16,14 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+
+# Root level junk (accidental vite init)
+/eslint.config.js
+/index.html
+/package.json
+/package-lock.json
+/vite.config.js
+/src/
+/public/
+*.db

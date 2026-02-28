@@ -1,14 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import research
+from app.routers import research, history
+from app.db.database import init_db
+from contextlib import asynccontextmanager
 
-app = FastAPI(
-    title="Multi-Agent Research Engine",
-    description="LangGraph-powered research system with Planner → Researcher → Critic → Writer pipeline",
-    version="1.0.0"
-)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db()
+    yield
 
-# Allow React frontend to talk to this API
+app = FastAPI(lifespan=lifespan)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -17,12 +19,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(research.router)
-
-@app.get("/")
-async def root():
-    return {
-        "message": "Research Agent API running",
-        "docs": "/docs",
-        "graph": "Planner → Researcher (loop) → Critic → Writer"
-    }
+app.include_router(research.router, prefix="/research", tags=["research"])
+app.include_router(history.router, prefix="/research", tags=["history"])
