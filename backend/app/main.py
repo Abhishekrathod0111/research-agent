@@ -15,7 +15,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://research-agent-abhishekrathod0111s-projects.vercel.app"
+        "http://localhost:3000",
+        "https://research-agent-abhishekrathod0111s-projects.vercel.app",
+        "https://research-agent-git-master-abhishekrathod0111s-projects.vercel.app",  # ADD THIS
     ],
     allow_credentials=True,
     allow_methods=["*"],
