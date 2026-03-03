@@ -4,7 +4,7 @@ from app.graph.state import ResearchState
 from app.graph.tools import web_search, format_search_results
 
 # One LLM instance shared across all agents
-llm = ChatGroq(api_key=GROQ_API_KEY, model=GROQ_MODEL, temperature=0.3)
+llm = ChatGroq(api_key=GROQ_API_KEY, model=GROQ_MODEL, temperature=0.3, max_retries=1)
 
 
 # ============================================================
@@ -18,13 +18,13 @@ def planner_node(state: ResearchState) -> dict:
         {
             "role": "system",
             "content": (
-                "You are a research planner. Break the user's query into exactly 3 "
+                "You are a research planner. Break the user's query into exactly 2 "
                 "specific, searchable sub-tasks. Return ONLY a numbered list. No intro text."
             )
         },
         {
             "role": "user",
-            "content": f"Query: {state['query']}\n\nCreate 3 research sub-tasks:"
+            "content": f"Query: {state['query']}\n\nCreate 2 research sub-tasks:"
         }
     ])
     
@@ -34,7 +34,7 @@ def planner_node(state: ResearchState) -> dict:
         line.split(". ", 1)[-1].strip()
         for line in lines
         if line.strip() and line[0].isdigit()
-    ][:3]  # Max 3 tasks
+    ][:2]  # Max 3 tasks
     
     plan_text = "\n".join(f"{i+1}. {t}" for i, t in enumerate(sub_tasks))
     
@@ -62,7 +62,7 @@ def researcher_node(state: ResearchState) -> dict:
     print(f"[RESEARCHER] Researching: {task}")
     
     # Step 1: Search the web
-    raw_results = web_search(task, max_results=4)
+    raw_results = web_search(task, max_results=2)
     formatted = format_search_results(raw_results)
     
     # Step 2: Ask LLM to synthesize the search results
@@ -72,7 +72,7 @@ def researcher_node(state: ResearchState) -> dict:
             "content": (
                 "You are a research analyst. Synthesize the web search results "
                 "into a clear, factual summary. Be specific, cite key points. "
-                "3-5 paragraphs max."
+                "2-3 paragraphs max."
             )
         },
         {
