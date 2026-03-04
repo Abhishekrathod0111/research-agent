@@ -34,7 +34,15 @@ export default function App() {
     }
   };
 
-  const simulateProgress = () => {
+  const handleSubmit = async () => {
+    if (!query.trim()) return;
+    setLoading(true);
+    setResult(null);
+    setDoneAgents([]);
+    setActiveAgent(null);
+
+    // Store timeout IDs so we can cancel them
+    const timeoutIds = [];
     const sequence = [
       { agent: "planner", delay: 0 },
       { agent: "researcher", delay: 4000 },
@@ -42,30 +50,26 @@ export default function App() {
       { agent: "writer", delay: 28000 },
     ];
     sequence.forEach(({ agent, delay }) => {
-      setTimeout(() => {
+      const id = setTimeout(() => {
         setActiveAgent(agent);
-        setDoneAgents((prev) => {
+        setDoneAgents(() => {
           const idx = agents.findIndex((a) => a.id === agent);
           return agents.slice(0, idx).map((a) => a.id);
         });
       }, delay);
+      timeoutIds.push(id);
     });
-  };
 
-  const handleSubmit = async () => {
-    if (!query.trim()) return;
-    setLoading(true);
-    setResult(null);
-    setDoneAgents([]);
-    setActiveAgent(null);
-    simulateProgress();
     try {
       const res = await axios.post(`${API}/research/run`, { query });
+      // Cancel all pending timeouts
+      timeoutIds.forEach(clearTimeout);
       setResult(res.data);
-      setDoneAgents(agents.map((a) => a.id));
-      setActiveAgent(null);
+      setDoneAgents(agents.map((a) => a.id));  // all green
+      setActiveAgent(null);                      // none active
       fetchHistory();
     } catch (e) {
+      timeoutIds.forEach(clearTimeout);
       console.error(e);
     } finally {
       setLoading(false);
