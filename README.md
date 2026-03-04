@@ -8,9 +8,7 @@ A production-ready AI research system built with **LangGraph** that orchestrates
 
 ## 🎬 Demo
 
-https://github.com/Abhishekrathod0111/research-agent/assets/demo.mp4
-
-> If the video doesn't load above, watch it here: [Demo Video Link](./assets/demo.mp4)
+[Demo Video Link](./assets/demo.mp4)
 
 ---
 
