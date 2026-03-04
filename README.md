@@ -6,6 +6,14 @@ A production-ready AI research system built with **LangGraph** that orchestrates
 
 ---
 
+## 🎬 Demo
+
+https://github.com/Abhishekrathod0111/research-agent/assets/demo.mp4
+
+> If the video doesn't load above, watch it here: [Demo Video Link](./assets/demo.mp4)
+
+---
+
 ## What It Does
 
 You type a research query. Four AI agents collaborate to answer it:
@@ -17,9 +25,32 @@ Planner → Researcher → Critic → Writer
 1. **Planner** breaks your query into 3 targeted sub-tasks
 2. **Researcher** runs live web searches for each sub-task (via Tavily)
 3. **Critic** reviews all findings, flags inconsistencies, approves or requests revision
-4. **Writer** generates a structured markdown report with cited sources
+4. **Writer** generates a structured Markdown report with cited sources
 
 Every query and its report are saved to SQLite — accessible via the history sidebar.
+
+---
+
+## 🏗️ Architecture
+
+![Architecture Diagram](./assets/architecture.png)
+
+### Agent Flow
+
+```
+START → planner → researcher ──loop (per sub-task)──→ critic → writer → END
+                    ↑__________________________|
+```
+
+The researcher runs once per sub-task using LangGraph's **conditional edge routing**. The critic either approves or flags the research before passing to the writer.
+
+---
+
+## 📄 Technical Documentation
+
+Full engineering breakdown, design decisions, and implementation notes:
+
+📎 [Research Agent — Technical Documentation](./assets/research-agent-documentation.docx)
 
 ---
 
@@ -33,40 +64,36 @@ Every query and its report are saved to SQLite — accessible via the history si
 | Backend | FastAPI + Python |
 | Frontend | React + Vite |
 | Memory | SQLite via aiosqlite |
-| Deployment | Render (backend) + Vercel (frontend) |
+| Backend Deployment | Render |
+| Frontend Deployment | Vercel |
 
 ---
 
-## Architecture
+## Project Structure
 
 ```
-frontend/          # React UI with agent pipeline visualization
-backend/
-├── app/
-│   ├── graph/
-│   │   ├── state.py      # Shared TypedDict state (Annotated for safe merging)
-│   │   ├── nodes.py      # 4 agent functions
-│   │   ├── graph.py      # StateGraph with conditional routing loop
-│   │   └── tools.py      # Tavily web search tool
-│   ├── db/
-│   │   └── database.py   # SQLite init, save, history queries
-│   ├── models/
-│   │   └── schemas.py    # Pydantic request/response models
-│   ├── routers/
-│   │   ├── research.py   # POST /research/run
-│   │   └── history.py    # GET /research/history
-│   └── main.py           # FastAPI app, CORS, lifespan
-└── requirements.txt
+research-agent/
+├── assets/
+│   ├── architecture.png              # System architecture diagram
+│   ├── demo.mp4                      # Demo video
+│   └── research-agent-documentation.docx
+├── frontend/                         # React UI — deployed on Vercel
+└── backend/                          # FastAPI — deployed on Render
+    └── app/
+        ├── graph/
+        │   ├── state.py      # Shared TypedDict state (Annotated for safe merging)
+        │   ├── nodes.py      # 4 agent functions
+        │   ├── graph.py      # StateGraph with conditional routing loop
+        │   └── tools.py      # Tavily web search tool
+        ├── db/
+        │   └── database.py   # SQLite init, save, history queries
+        ├── models/
+        │   └── schemas.py    # Pydantic request/response models
+        ├── routers/
+        │   ├── research.py   # POST /research/run
+        │   └── history.py    # GET /research/history
+        └── main.py           # FastAPI app, CORS, lifespan
 ```
-
-### Agent Flow
-
-```
-START → planner → researcher ──loop (per sub-task)──→ critic → writer → END
-                      ↑__________________________|
-```
-
-The researcher runs once per sub-task using LangGraph's conditional edge routing. The critic either approves or flags the research before passing to the writer.
 
 ---
 
@@ -148,21 +175,6 @@ Multiple researcher invocations write to `research_results`. The `operator.add` 
 
 **Why SQLite over a hosted DB?**  
 Zero-config persistence that works locally and on Render's ephemeral filesystem for demos. Easily swappable for PostgreSQL in production.
-
----
-
-## Deployment
-
-**Backend → Render**
-- Root directory: `backend`
-- Build: `pip install -r requirements.txt`
-- Start: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-- Add `GROQ_API_KEY` and `TAVILY_API_KEY` as environment variables
-
-**Frontend → Vercel**
-- Root directory: `frontend`
-- Framework: Vite (auto-detected)
-- No environment variables needed
 
 ---
 
